@@ -1,0 +1,117 @@
+---
+title: "Class 2 HW"
+author: "Meghana Sannidhi"
+date: "2026-09-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+
+Typical_Employee_Survey_Data_1_ <-
+read_excel("Typical_Employee_Survey_Data (1).xlsx",
+col_names = FALSE)
+```
+
+# Class 2 Homework
+
+## 1. Five-Point Summary and Boxplots
+```{r}
+ls()
+summary(Typical_Employee_Survey_Data_1_)
+str(Typical_Employee_Survey_Data_1_)
+lapply(Typical_Employee_Survey_Data_1_, unique)
+fivenum(Typical_Employee_Survey_Data_1_$...1)
+fivenum(Typical_Employee_Survey_Data_1_$...5)
+
+boxplot(Typical_Employee_Survey_Data_1_$...1,
+        main = "Boxplot of Column 1",
+        ylab = "Value")
+
+boxplot(Typical_Employee_Survey_Data_1_$...5,
+        main = "Boxplot of Column 5",
+        ylab = "Value")
+## 2. Convert Categorical Columns to Factors
+```
+Typical_Employee_Survey_Data_1_$...2 <- as.factor(Typical_Employee_Survey_Data_1_$...2)
+Typical_Employee_Survey_Data_1_$...3 <- as.factor(Typical_Employee_Survey_Data_1_$...3)
+Typical_Employee_Survey_Data_1_$...4 <- as.factor(Typical_Employee_Survey_Data_1_$...4)
+Typical_Employee_Survey_Data_1_$...6 <- as.factor(Typical_Employee_Survey_Data_1_$...6)
+Typical_Employee_Survey_Data_1_$...7 <- as.factor(Typical_Employee_Survey_Data_1_$...7)
+Typical_Employee_Survey_Data_1_$...8 <- as.factor(Typical_Employee_Survey_Data_1_$...8)
+Typical_Employee_Survey_Data_1_$...9 <- as.factor(Typical_Employee_Survey_Data_1_$...9)
+Typical_Employee_Survey_Data_1_$...10 <- as.factor(Typical_Employee_Survey_Data_1_$...10)
+Typical_Employee_Survey_Data_1_$...11 <- as.factor(Typical_Employee_Survey_Data_1_$...11)
+
+str(Typical_Employee_Survey_Data_1_)
+
+## 3. Visuals per column
+```r
+```{r}
+hist(Typical_Employee_Survey_Data_1_$...1,
+main = "Distribution of Column 1",
+xlab = "Column 1")
+
+hist(Typical_Employee_Survey_Data_1_$...5,
+main = "Distribution of Column 5",
+xlab = "Column 5")
+
+barplot(table(Typical_Employee_Survey_Data_1_$...2),
+main = "Distribution of Column 2",
+xlab = "Category",
+ylab = "Frequency")
+barplot(table(Typical_Employee_Survey_Data_1_$...3),
+main = "Distribution of Column 3",
+xlab = "Category",
+ylab = "Frequency")
+
+barplot(table(Typical_Employee_Survey_Data_1_$...4),
+main = "Distribution of Column 4",
+xlab = "Category",
+ylab = "Frequency")
+
+barplot(table(Typical_Employee_Survey_Data_1_$...6),
+main = "Distribution of Column 6",
+xlab = "Category",
+ylab = "Frequency")
+
+barplot(table(Typical_Employee_Survey_Data_1_$...7),
+main = "Distribution of Column 7",
+xlab = "Category",
+ylab = "Frequency")
+
+barplot(table(Typical_Employee_Survey_Data_1_$...8),
+main = "Distribution of Column 8",
+xlab = "Category",
+ylab = "Frequency")
+
+barplot(table(Typical_Employee_Survey_Data_1_$...9),
+main = "Distribution of Column 9",
+xlab = "Category",
+ylab = "Frequency")
+
+barplot(table(Typical_Employee_Survey_Data_1_$...10),
+main = "Distribution of Column 10",
+xlab = "Category",
+ylab = "Frequency")
+
+barplot(table(Typical_Employee_Survey_Data_1_$...11),
+main = "Distribution of Column 11",
+xlab = "Category",
+ylab = "Frequency")
+```
+## 4. Scatterplots show relationships
+```{r}
+plot(Typical_Employee_Survey_Data_1_$...1,
+Typical_Employee_Survey_Data_1_$...5,
+main = "Relationship Between Column 1 and Column 5",
+xlab = "Column 1",
+ylab = "Column 5",
+pch = 19)
+```
+
+
+
+
+
