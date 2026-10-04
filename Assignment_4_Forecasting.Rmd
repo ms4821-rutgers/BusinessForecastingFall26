@@ -1,0 +1,135 @@
+---
+title: "Assignment 4 - Running Forecasting Models"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Step 1: Data Preparation & Model Fitting
+
+```{r}
+# Load required libraries
+library(fpp2)
+library(TTR)
+library(dplyr)
+
+# 1. Read dataset
+unemployment_data <- read.csv(file.choose())
+
+# 2. Filter for California, remove commas, convert to numeric, and drop NA values
+df_state <- unemployment_data %>%
+  filter(State.Area == "California") %>%
+  arrange(Year, Month) %>%
+  mutate(
+    Population = as.numeric(gsub(",", "", Total.Civilian.Non.Institutional.Population.in.State.Area))
+  ) %>%
+  filter(!is.na(Population))
+
+# 3. Create Time Series object
+ts_data <- ts(
+  df_state$Population,
+  start = c(df_state$Year[1], df_state$Month[1]),
+  frequency = 12
+)
+
+# Clean any remaining missing/infinite values
+ts_data <- na.omit(ts_data)
+
+# 4. Set forecast horizon (12 months ahead)
+h_period <- 12
+
+# 5. Fit class models
+mean_fc   <- meanf(ts_data, h = h_period)
+naive_fc  <- naive(ts_data, h = h_period)
+rwf_fc    <- rwf(ts_data, h = h_period, drift = TRUE)
+snaive_fc <- snaive(ts_data, h = h_period)
+
+# Moving Averages
+ma5       <- ma(ts_data, order = 5)
+ma9       <- ma(ts_data, order = 9)
+
+# Exponential Smoothing (ETS)
+ets_fit   <- ets(ts_data)
+ets_fc    <- forecast(ets_fit, h = h_period)
+
+# Holt-Winters Forecasting (Fallback handling added in case optimization fails)
+hw_fit    <- tryCatch(
+  HoltWinters(ts_data, seasonal = "additive"),
+  error = function(e) HoltWinters(ts_data, gamma = FALSE)
+)
+hw_fc     <- forecast(hw_fit, h = h_period)
+```
+## Step 2: Understand and Explain Model Output
+
+```{r}
+# Display model summaries
+summary(ets_fit)
+summary(hw_fit)
+```
+
+### Model Interpretation:
+
+* **Mean Forecast (`meanf`):** Sets all future predictions equal to the historical average of California's population.
+* **Naïve Forecast (`naive`):** Assumes no future structural changes, setting all future monthly forecasts to the single most recent observed value.
+* **Random Walk with Drift (`rwf`):** Models the overall historical trajectory, capturing persistent upward growth or decline in total population over time.
+* **Seasonal Naïve (`snaive`):** Assigns monthly forecasts based on the exact same month's observation from the previous year.
+* **Moving Averages (`ma`):** Smooths short-term fluctuations across 5-month (`ma5`) and 9-month (`ma9`) rolling windows.
+* **ETS Model (`ets`):** Automatically fits error, trend, and seasonal components to maximize likelihood and capture baseline series movement.
+* **Holt-Winters (`HoltWinters`):** Dynamically updates level ($\alpha$), trend ($\beta$), and seasonal ($\gamma$) parameters to forecast future changes.
+
+---
+
+## Step 3: Plot Time Series and Forecasts in One Chart
+
+```{r}
+# Plot original time series and all forecast lines
+plot(ts_data, main = "California Civilian Population Forecast Comparison", 
+     ylab = "Population", xlab = "Time", xlim = c(start(ts_data)[1], end(ts_data)[1] + 2))
+
+lines(mean_fc$mean, col = "blue", lwd = 2)
+lines(naive_fc$mean, col = "red", lwd = 2)
+lines(rwf_fc$mean, col = "green", lwd = 2)
+lines(snaive_fc$mean, col = "black", lwd = 2)
+lines(ets_fc$mean, col = "purple", lwd = 2)
+lines(hw_fc$mean, col = "orange", lwd = 2)
+
+legend("topleft", 
+       legend = c("Mean", "Naive", "Drift (RWF)", "SNaive", "ETS", "Holt-Winters"),
+       col = c("blue", "red", "green", "black", "purple", "orange"), 
+       lty = 1, lwd = 2, cex = 0.8)
+```
+
+---
+
+## Step 4: Compare Model Accuracy & Select the Best Model
+
+```{r}
+# Evaluate accuracy for all fitted models
+acc_mean   <- accuracy(mean_fc)
+acc_naive  <- accuracy(naive_fc)
+acc_rwf    <- accuracy(rwf_fc)
+acc_snaive <- accuracy(snaive_fc)
+acc_ets    <- accuracy(ets_fc)
+acc_hw     <- accuracy(hw_fc)
+
+# Build metrics summary table
+acc_summary <- data.frame(
+  Model = c("Mean", "Naive", "Drift (RWF)", "SNaive", "ETS", "Holt-Winters"),
+  RMSE  = c(acc_mean[1, "RMSE"], acc_naive[1, "RMSE"], acc_rwf[1, "RMSE"], 
+            acc_snaive[1, "RMSE"], acc_ets[1, "RMSE"], acc_hw[1, "RMSE"]),
+  MAE   = c(acc_mean[1, "MAE"], acc_naive[1, "MAE"], acc_rwf[1, "MAE"], 
+            acc_snaive[1, "MAE"], acc_ets[1, "MAE"], acc_hw[1, "MAE"]),
+  MAPE  = c(acc_mean[1, "MAPE"], acc_naive[1, "MAPE"], acc_rwf[1, "MAPE"], 
+            acc_snaive[1, "MAPE"], acc_ets[1, "MAPE"], acc_hw[1, "MAPE"])
+)
+
+# Rank models from lowest to highest RMSE
+acc_summary <- acc_summary[order(acc_summary$RMSE), ]
+acc_summary
+```
+
+### Accuracy Conclusion:
+
+**Root Mean Squared Error (RMSE)** was selected as the evaluation metric to penalize larger errors. Based on the ordered comparison table above, the model listed at the top (with the lowest RMSE) provides the most accurate fit for this series.
