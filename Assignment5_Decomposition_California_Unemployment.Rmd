@@ -1,0 +1,81 @@
+---
+title: "California Unemployment Time Series Analysis"
+author: "Meghana Sannidhi"
+date: "2026-10-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## California Unemployment Decomposition
+
+```{r california-decomposition}
+library(forecast)
+
+# Load dataset
+unemployment <- read.csv(
+  "Unemployment in America Per US State.csv",
+  check.names = FALSE
+)
+
+# Filter California
+california <- subset(unemployment,
+                     `State/Area` == "California")
+
+# Sort by date
+california <- california[
+  order(california$Year, california$Month), ]
+
+# Convert to monthly time series
+ca_ts <- ts(
+  as.numeric(california$`Percent (%) of Labor Force Unemployed in State/Area`),
+  start = c(1976, 1),
+  frequency = 12
+)
+
+# Fill missing observations
+ca_ts <- na.interp(ca_ts)
+
+# Original time series
+plot(ca_ts,
+     main = "California Unemployment Rate",
+     ylab = "Unemployment Rate (%)")
+
+# STL decomposition
+stl_decomp <- stl(ca_ts, s.window = "periodic")
+plot(stl_decomp)
+
+# Seasonal adjustment
+plot(ca_ts, main = "Seasonal Adjustment")
+lines(seasadj(stl_decomp), col = "red")
+
+# Classical decomposition
+decomp_ca <- decompose(ca_ts)
+plot(decomp_ca)
+
+# Forecast next 15 months
+f_stl <- forecast(stl_decomp, h = 15)
+plot(f_stl)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
