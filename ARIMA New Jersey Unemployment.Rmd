@@ -1,0 +1,46 @@
+---
+title: 'ARIMA: New Jersey Unemployment'
+author: "Meghana Sannidhi"
+date: "2026-11-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data
+
+```{r, message=FALSE, warning=FALSE}
+library(fpp2)
+library(forecast)
+df <- read.csv("Unemployment in America Per US State.csv", check.names = FALSE, encoding = "UTF-8")
+names(df) <- c("fips","state","year","month","pop","lf","lf_pct","emp","emp_pct","unemp","urate")
+nj <- subset(df, state == "New Jersey")
+nj$urate <- suppressWarnings(as.numeric(nj$urate))
+njts <- ts(nj$urate, start = c(1976, 1), frequency = 12)
+njts[is.na(njts)] <- (5.2 + 5.4) / 2   # Oct 2025 missing (shutdown): average of Sep and Nov
+plot(njts, main = "New Jersey unemployment rate", ylab = "%")
+ndiffs(njts)
+tsdisplay(njts)
+
+njtsdiff1 <- diff(njts, differences = 1)
+plot(njtsdiff1)
+tsdisplay(njtsdiff1)
+```
+
+
+The time series is the monthly New Jersey unemployment rate from January 1976 to November 2025 (seasonally adjusted). ndiffs() = 1, so the series needs one difference to be stationary. The ACF decays slowly, which shows a trend. COVID pushed the rate to 15.4% in April 2020.
+
+## Perform ARIMA
+
+```{r}
+njts_model <- njts
+window(njts_model, start = c(2020, 3), end = c(2021, 12)) <- NA   # remove the COVID shock
+auto_fit <- auto.arima(njts_model, trace = TRUE, stepwise = FALSE)
+auto_fit
+```
+
+## 1. Explain the output
+
+auto.arima tested many models (the trace list) and chose ARIMA(1,1,2)(2,0,0)[12] because it had the lowest AICc. The non-seasonal part (1,1,2) means 1 autoregressive term, 1 difference and 2 moving-average terms. The seasonal part (2,0,0)[12] adds 2 seasonal AR terms at lags 12 and 24. The ar1 coefficient
